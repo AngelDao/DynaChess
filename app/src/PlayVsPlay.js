@@ -1,11 +1,12 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import Chess from 'chess.js';
 import styled from 'styled-components'
 import { Chessboard } from 'react-chessboard';
 import { Fluence } from "@fluencelabs/fluence";
 import { krasnodar } from "@fluencelabs/fluence-network-environment";
+import { registerMoveSaver } from "./_aqua/moves";
 
-
+const relayNode = "/dns4/kras-00.fluence.dev/tcp/19990/wss/p2p/12D3KooWSD5PToNiLQwKDXsu8JSysCwUt8BVUJEqCHcDe7P5h45e";
 
 export default function PlayVsPlay() {
   const chessboardRef = useRef();
@@ -42,8 +43,20 @@ export default function PlayVsPlay() {
   }
 
   async function createNewMetadata() {
-
+    if (!Fluence.getStatus().isConnected) {
+      console.log("", Fluence.getStatus().isConnected)
+      return;
+    }
+    console.log("Fluence", registerMoveSaver)
   }
+
+  useEffect(() => {
+    async function start() {
+      await Fluence.start({ connectTo: relayNode }).catch((err) => console.log("Client initialization failed", err));
+      createNewMetadata();
+    }
+    start();
+  }, []);
 
   
   function onDrop(sourceSquare, targetSquare) {

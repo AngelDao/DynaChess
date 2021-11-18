@@ -1,0 +1,9 @@
+data SaveResult:
+    ceramicId: string
+
+data ReadResult:
+    moves: []string
+
+service MoveSaver("movesaver"):
+    saveMoves(move_json: string, ceramicId: string) -> SaveResult
+    readMoves(ceramicId: string) -> ReadResult
