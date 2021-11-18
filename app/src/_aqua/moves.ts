@@ -72,4 +72,201 @@ export function registerMoveSaver(...args: any) {
 }
       
 // Functions
+ 
+export type Save_movesResult = { ceramicId: string; }
+export function save_moves(relay: string, peer_: string, move_json: string, ceramic_id: string, config?: {ttl?: number}): Promise<Save_movesResult>;
+export function save_moves(peer: FluencePeer, relay: string, peer_: string, move_json: string, ceramic_id: string, config?: {ttl?: number}): Promise<Save_movesResult>;
+export function save_moves(...args: any) {
 
+    let script = `
+                        (xor
+                     (seq
+                      (seq
+                       (seq
+                        (seq
+                         (seq
+                          (seq
+                           (seq
+                            (seq
+                             (seq
+                              (seq
+                               (call %init_peer_id% ("getDataSrv" "-relay-") [] -relay-)
+                               (call %init_peer_id% ("getDataSrv" "relay") [] relay)
+                              )
+                              (call %init_peer_id% ("getDataSrv" "peer") [] peer)
+                             )
+                             (call %init_peer_id% ("getDataSrv" "move_json") [] move_json)
+                            )
+                            (call %init_peer_id% ("getDataSrv" "ceramic_id") [] ceramic_id)
+                           )
+                           (call -relay- ("op" "noop") [])
+                          )
+                          (call relay ("op" "noop") [])
+                         )
+                         (xor
+                          (call peer ("movesaver" "saveMoves") [move_json ceramic_id] result)
+                          (seq
+                           (seq
+                            (seq
+                             (call relay ("op" "noop") [])
+                             (call -relay- ("op" "noop") [])
+                            )
+                            (call %init_peer_id% ("errorHandlingSrv" "error") [%last_error% 1])
+                           )
+                           (call -relay- ("op" "noop") [])
+                          )
+                         )
+                        )
+                        (call relay ("op" "noop") [])
+                       )
+                       (call -relay- ("op" "noop") [])
+                      )
+                      (xor
+                       (call %init_peer_id% ("callbackSrv" "response") [result])
+                       (call %init_peer_id% ("errorHandlingSrv" "error") [%last_error% 2])
+                      )
+                     )
+                     (call %init_peer_id% ("errorHandlingSrv" "error") [%last_error% 3])
+                    )
+    `
+    return callFunction(
+        args,
+        {
+    "functionName" : "save_moves",
+    "returnType" : {
+        "tag" : "primitive"
+    },
+    "argDefs" : [
+        {
+            "name" : "relay",
+            "argType" : {
+                "tag" : "primitive"
+            }
+        },
+        {
+            "name" : "peer",
+            "argType" : {
+                "tag" : "primitive"
+            }
+        },
+        {
+            "name" : "move_json",
+            "argType" : {
+                "tag" : "primitive"
+            }
+        },
+        {
+            "name" : "ceramic_id",
+            "argType" : {
+                "tag" : "primitive"
+            }
+        }
+    ],
+    "names" : {
+        "relay" : "-relay-",
+        "getDataSrv" : "getDataSrv",
+        "callbackSrv" : "callbackSrv",
+        "responseSrv" : "callbackSrv",
+        "responseFnName" : "response",
+        "errorHandlingSrv" : "errorHandlingSrv",
+        "errorFnName" : "error"
+    }
+},
+        script
+    )
+}
+
+ 
+export type Read_movesResult = { moves: string[]; }
+export function read_moves(relay: string, peer_: string, ceramic_id: string, config?: {ttl?: number}): Promise<Read_movesResult>;
+export function read_moves(peer: FluencePeer, relay: string, peer_: string, ceramic_id: string, config?: {ttl?: number}): Promise<Read_movesResult>;
+export function read_moves(...args: any) {
+
+    let script = `
+                        (xor
+                     (seq
+                      (seq
+                       (seq
+                        (seq
+                         (seq
+                          (seq
+                           (seq
+                            (seq
+                             (seq
+                              (call %init_peer_id% ("getDataSrv" "-relay-") [] -relay-)
+                              (call %init_peer_id% ("getDataSrv" "relay") [] relay)
+                             )
+                             (call %init_peer_id% ("getDataSrv" "peer") [] peer)
+                            )
+                            (call %init_peer_id% ("getDataSrv" "ceramic_id") [] ceramic_id)
+                           )
+                           (call -relay- ("op" "noop") [])
+                          )
+                          (call relay ("op" "noop") [])
+                         )
+                         (xor
+                          (call peer ("movesaver" "readMoves") [ceramic_id] result)
+                          (seq
+                           (seq
+                            (seq
+                             (call relay ("op" "noop") [])
+                             (call -relay- ("op" "noop") [])
+                            )
+                            (call %init_peer_id% ("errorHandlingSrv" "error") [%last_error% 1])
+                           )
+                           (call -relay- ("op" "noop") [])
+                          )
+                         )
+                        )
+                        (call relay ("op" "noop") [])
+                       )
+                       (call -relay- ("op" "noop") [])
+                      )
+                      (xor
+                       (call %init_peer_id% ("callbackSrv" "response") [result])
+                       (call %init_peer_id% ("errorHandlingSrv" "error") [%last_error% 2])
+                      )
+                     )
+                     (call %init_peer_id% ("errorHandlingSrv" "error") [%last_error% 3])
+                    )
+    `
+    return callFunction(
+        args,
+        {
+    "functionName" : "read_moves",
+    "returnType" : {
+        "tag" : "primitive"
+    },
+    "argDefs" : [
+        {
+            "name" : "relay",
+            "argType" : {
+                "tag" : "primitive"
+            }
+        },
+        {
+            "name" : "peer",
+            "argType" : {
+                "tag" : "primitive"
+            }
+        },
+        {
+            "name" : "ceramic_id",
+            "argType" : {
+                "tag" : "primitive"
+            }
+        }
+    ],
+    "names" : {
+        "relay" : "-relay-",
+        "getDataSrv" : "getDataSrv",
+        "callbackSrv" : "callbackSrv",
+        "responseSrv" : "callbackSrv",
+        "responseFnName" : "response",
+        "errorHandlingSrv" : "errorHandlingSrv",
+        "errorFnName" : "error"
+    }
+},
+        script
+    )
+}

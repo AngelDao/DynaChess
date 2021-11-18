@@ -7,3 +7,13 @@ data ReadResult:
 service MoveSaver("movesaver"):
     saveMoves(move_json: string, ceramicId: string) -> SaveResult
     readMoves(ceramicId: string) -> ReadResult
+
+func save_moves(relay: string, peer:string, move_json: string, ceramic_id: string) -> SaveResult:
+    on peer via relay:
+        result <- MoveSaver.saveMoves(move_json, ceramic_id)
+    <- result
+
+func read_moves(relay: string, peer:string, ceramic_id: string) -> ReadResult:
+    on peer via relay:
+        result <- MoveSaver.readMoves(ceramic_id)
+    <- result

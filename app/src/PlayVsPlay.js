@@ -4,13 +4,14 @@ import styled from 'styled-components'
 import { Chessboard } from 'react-chessboard';
 import { Fluence } from "@fluencelabs/fluence";
 import { krasnodar } from "@fluencelabs/fluence-network-environment";
-import { registerMoveSaver } from "./_aqua/moves";
+import { save_moves, read_moves } from "./_aqua/moves";
 
 const relayNode = "/dns4/kras-00.fluence.dev/tcp/19990/wss/p2p/12D3KooWSD5PToNiLQwKDXsu8JSysCwUt8BVUJEqCHcDe7P5h45e";
 
 export default function PlayVsPlay() {
   const chessboardRef = useRef();
   const [game, setGame] = useState(new Chess());
+  const [gameHistory, setGameHistory] = useState([]);
   const [ceramicId, setCeramicId] = useState("");
 
   // console.log("Game", game.history())
@@ -47,7 +48,9 @@ export default function PlayVsPlay() {
       console.log("", Fluence.getStatus().isConnected)
       return;
     }
-    console.log("Fluence", registerMoveSaver)
+    console.log("Fluence", save_moves, read_moves)
+
+    
   }
 
   useEffect(() => {
@@ -66,6 +69,8 @@ export default function PlayVsPlay() {
       to: targetSquare,
       promotion: 'q' 
     });
+    const history = game.history();
+    setGameHistory(history)
     setGame(gameCopy);
     return move;
   }
