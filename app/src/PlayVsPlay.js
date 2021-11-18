@@ -7,6 +7,8 @@ import { krasnodar } from "@fluencelabs/fluence-network-environment";
 import { save_moves, read_moves } from "./_aqua/moves";
 
 const relayNode = "/dns4/kras-00.fluence.dev/tcp/19990/wss/p2p/12D3KooWSD5PToNiLQwKDXsu8JSysCwUt8BVUJEqCHcDe7P5h45e";
+const peerId = '12D3KooWNqSpUbLS74D7JVyUQALazrnEBejNLppsSfw26g4DguRn';
+const relayPeerId = '12D3KooWSD5PToNiLQwKDXsu8JSysCwUt8BVUJEqCHcDe7P5h45e';
 
 export default function PlayVsPlay() {
   const chessboardRef = useRef();
@@ -43,20 +45,22 @@ export default function PlayVsPlay() {
     return moves
   }
 
-  async function createNewMetadata() {
+  async function sendToFluenceNode() {
     if (!Fluence.getStatus().isConnected) {
-      console.log("", Fluence.getStatus().isConnected)
       return;
-    }
-    console.log("Fluence", save_moves, read_moves)
+    } 
+    console.log("Sending game", gameHistory, ceramicId)
 
-    
+    const myJson = JSON.stringify({ moves: gameHistory })
+
+    const saveRes = await save_moves(relayPeerId, peerId, myJson, ceramicId)
+    console.log("save game", saveRes)
   }
 
   useEffect(() => {
     async function start() {
       await Fluence.start({ connectTo: relayNode }).catch((err) => console.log("Client initialization failed", err));
-      createNewMetadata();
+      console.log("Fluence connected", Fluence.getStatus().isConnected)
     }
     start();
   }, []);
@@ -71,7 +75,9 @@ export default function PlayVsPlay() {
     });
     const history = game.history();
     setGameHistory(history)
+    console.log("History", history)
     setGame(gameCopy);
+    sendToFluenceNode();
     return move;
   }
 
@@ -93,11 +99,11 @@ export default function PlayVsPlay() {
       <button
         className="rc-button"
         onClick={() => {
+          setCeramicId("");
           safeGameMutate((game) => {
             game.reset();
           });
           chessboardRef.current.clearPremoves();
-          createNewMetadata();
         }}
       >
         New Game
