@@ -13,11 +13,8 @@ import { DID } from 'dids'
 
 // write/read node for ceramic testnet
 const API_URL = 'https://ceramic-clay.3boxlabs.com'
-const ceramic = new CeramicClient(API_URL)
-const resolver = { ...KeyDidResolver.getResolver(),
-                   ...ThreeIdResolver.getResolver(ceramic) }
-const did = new DID({ resolver })
-ceramic.did = did
+
+const seed = randomBytes(32)
 
 interface SaveResult {
   ceramicId: string;
@@ -44,6 +41,11 @@ class MoveSaver implements MoveSaverDef {
   }
 
   async generateDoc(move_json) {
+    const ceramic = new CeramicClient(API_URL)
+    const provider = new Ed25519Provider(seed)
+    ceramic.did.setProvider(provider)
+    await ceramic.did.authenticate()
+
     this.doc = await TileDocument.create(
       ceramic,
       JSON.parse(move_json)
@@ -56,6 +58,12 @@ class MoveSaver implements MoveSaverDef {
 
 
   async saveMoves(move_json: string): Promise<SaveResult> {
+    const ceramic = new CeramicClient(API_URL)
+    const provider = new Ed25519Provider(seed)
+    ceramic.did.setProvider(provider)
+    await ceramic.did.authenticate()
+
+
     if (this.id && this.id.length > 0){
       const doc = await TileDocument.load(ceramic, this.id);
       await doc.update(JSON.parse(move_json));
@@ -70,6 +78,11 @@ class MoveSaver implements MoveSaverDef {
     }
   }
   async readMoves(): Promise<ReadResult> {
+    const ceramic = new CeramicClient(API_URL)
+    const provider = new Ed25519Provider(seed)
+    ceramic.did.setProvider(provider)
+    await ceramic.did.authenticate()
+
     const doc = await TileDocument.load(ceramic, this.id);
     let result = {} as ReadResult;
     console.log("Doc Content: ", doc.content)
