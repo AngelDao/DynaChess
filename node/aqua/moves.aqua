@@ -5,7 +5,7 @@ data ReadResult:
     moves: []string
 
 service MoveSaver("movesaver"):
-    generateDoc() -> SaveResult
+    generateDoc(move_json: string) -> SaveResult
     readInfo() -> *string
     saveMoves(move_json: string) -> SaveResult
     readMoves() -> ReadResult

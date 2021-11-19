@@ -17,7 +17,7 @@ import {
 // Services
 
 export interface MoveSaverDef {
-    generateDoc: (callParams: CallParams<null>) => { ceramicId: string; } | Promise<{ ceramicId: string; }>;
+    generateDoc: (move_json: string, callParams: CallParams<'move_json'>) => { ceramicId: string; } | Promise<{ ceramicId: string; }>;
     readInfo: (callParams: CallParams<null>) => string[] | Promise<string[]>;
     readMoves: (callParams: CallParams<null>) => { moves: string[]; } | Promise<{ moves: string[]; }>;
     saveMoves: (move_json: string, callParams: CallParams<'move_json'>) => { ceramicId: string; } | Promise<{ ceramicId: string; }>;
@@ -37,6 +37,12 @@ export function registerMoveSaver(...args: any) {
         {
             "functionName" : "generateDoc",
             "argDefs" : [
+                {
+                    "name" : "move_json",
+                    "argType" : {
+                        "tag" : "primitive"
+                    }
+                }
             ],
             "returnType" : {
                 "tag" : "primitive"
@@ -166,8 +172,8 @@ export function read_info(...args: any) {
 
  
 export type GenerateDocResult = { ceramicId: string; }
-export function generateDoc(relay: string, peer_: string, config?: {ttl?: number}): Promise<GenerateDocResult>;
-export function generateDoc(peer: FluencePeer, relay: string, peer_: string, config?: {ttl?: number}): Promise<GenerateDocResult>;
+export function generateDoc(relay: string, peer_: string, moveJson: string, config?: {ttl?: number}): Promise<GenerateDocResult>;
+export function generateDoc(peer: FluencePeer, relay: string, peer_: string, moveJson: string, config?: {ttl?: number}): Promise<GenerateDocResult>;
 export function generateDoc(...args: any) {
 
     let script = `
@@ -180,17 +186,20 @@ export function generateDoc(...args: any) {
                           (seq
                            (seq
                             (seq
-                             (call %init_peer_id% ("getDataSrv" "-relay-") [] -relay-)
-                             (call %init_peer_id% ("getDataSrv" "relay") [] relay)
+                             (seq
+                              (call %init_peer_id% ("getDataSrv" "-relay-") [] -relay-)
+                              (call %init_peer_id% ("getDataSrv" "relay") [] relay)
+                             )
+                             (call %init_peer_id% ("getDataSrv" "peer") [] peer)
                             )
-                            (call %init_peer_id% ("getDataSrv" "peer") [] peer)
+                            (call %init_peer_id% ("getDataSrv" "moveJson") [] moveJson)
                            )
                            (call -relay- ("op" "noop") [])
                           )
                           (call relay ("op" "noop") [])
                          )
                          (xor
-                          (call peer ("movesaver" "generateDoc") [] result)
+                          (call peer ("movesaver" "generateDoc") [moveJson] result)
                           (seq
                            (seq
                             (seq
@@ -231,6 +240,12 @@ export function generateDoc(...args: any) {
         },
         {
             "name" : "peer",
+            "argType" : {
+                "tag" : "primitive"
+            }
+        },
+        {
+            "name" : "moveJson",
             "argType" : {
                 "tag" : "primitive"
             }
