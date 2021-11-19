@@ -12,15 +12,19 @@ import ThreeIdResolver from '@ceramicnetwork/3id-did-resolver'
 import { DID } from 'dids'
 
 // write/read node for ceramic testnet
+(async () => {
+  
 const API_URL = 'https://ceramic-clay.3boxlabs.com'
 const ceramic = new CeramicClient(API_URL)
 const seed = randomBytes(32)
 const provider = new Ed25519Provider(seed)
 const did = new DID({ provider, resolver: KeyDidResolver.getResolver() })
+await did.authenticate()
 ceramic.did = did
 ceramic.did.setProvider(provider)
 
-console.log(ceramic.context.api)
+
+console.log(ceramic)
 
 interface SaveResult {
   ceramicId: string;
@@ -55,7 +59,7 @@ class MoveSaver implements MoveSaverDef {
     // const did = new DID({ provider, resolver: KeyDidResolver.getResolver() })
     // ceramic.did = did
     // ceramic.did.setProvider(provider)
-      await ceramic.did.authenticate()
+      // await ceramic.did.authenticate()
     
       const doc = await TileDocument.create(
         ceramic,
@@ -115,3 +119,4 @@ class MoveSaver implements MoveSaverDef {
   }
   
   main();
+})()
