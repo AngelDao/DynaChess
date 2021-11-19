@@ -8,7 +8,7 @@ import { save_moves, read_moves, read_info, generateDoc } from "./_aqua/moves";
 
 const relayNode =
   "/dns4/kras-00.fluence.dev/tcp/19990/wss/p2p/12D3KooWSD5PToNiLQwKDXsu8JSysCwUt8BVUJEqCHcDe7P5h45e";
-const peerId = "12D3KooWMXHKr7AfkkGUzdRuxV5TYrtVP8csvDUdm2tdzmTLgxgY";
+const peerId = "12D3KooWAHdALHfvbxRGC4phfJgmRi9D4WERJ4DPuvnLaiDPYucv";
 const relayPeerId = "12D3KooWSD5PToNiLQwKDXsu8JSysCwUt8BVUJEqCHcDe7P5h45e";
 const ceramicId = "https://gateway.ceramic.network";
 

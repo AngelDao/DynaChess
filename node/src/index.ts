@@ -66,7 +66,7 @@ class MoveSaver implements MoveSaverDef {
     
       const doc = await TileDocument.create(
         ceramic,
-        {foo:"bar"}
+        {"foo" : "bar"}
       );
       const id  = doc.id.toString();
       let result = {} as SaveResult;
@@ -119,6 +119,16 @@ class MoveSaver implements MoveSaverDef {
     console.log("application started", Fluence.getStatus());
     console.log("peer id is: ", Fluence.getStatus().peerId);
     console.log("relay is: ", Fluence.getStatus().relayPeerId);
+    const doc = await TileDocument.create(
+      ceramic,
+      {"foo" : "bar"}
+    );
+    console.log("doc", doc.id.toString())
+    let result = {} as SaveResult;
+    result.ceramicId = doc.id.toString();
+    result.doc = doc;
+    result.msg = "success";
+    console.log(result)
   }
   
   main();
