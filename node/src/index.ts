@@ -7,21 +7,24 @@ import CeramicClient from '@ceramicnetwork/http-client'
 import { Ed25519Provider } from 'key-did-provider-ed25519'
 import { randomBytes } from '@stablelib/random'
 import { TileDocument } from '@ceramicnetwork/stream-tile';
-import KeyDidResolver from 'key-did-resolver'
-import ThreeIdResolver from '@ceramicnetwork/3id-did-resolver'
+import KeyResolver from 'key-did-resolver'
+import ThreeIDResolver from '@ceramicnetwork/3id-did-resolver'
 import { DID } from 'dids'
 
 // write/read node for ceramic testnet
 (async () => {
   
-const API_URL = 'https://ceramic-clay.3boxlabs.com'
-const ceramic = new CeramicClient(API_URL)
-const seed = randomBytes(32)
-const provider = new Ed25519Provider(seed)
-const did = new DID({ provider, resolver: KeyDidResolver.getResolver() })
-await did.authenticate()
-ceramic.did = did
-ceramic.did.setProvider(provider)
+const API_URL = 'https://ceramic-clay.3boxlabs.com';
+const ceramic = new CeramicClient(API_URL);
+const seed = new Uint8Array(randomBytes(32));
+const provider = new Ed25519Provider(seed);
+const keyResolver = KeyResolver.getResolver();
+const threeIDResolver = ThreeIDResolver.getResolver(ceramic);
+const resolverRegistry = {...keyResolver, ...ThreeIDResolver.getResolver(ceramic)};
+const did = new DID({ provider, resolver: resolverRegistry });
+await did.authenticate();
+await ceramic.setDID(did); 
+await ceramic.did.setProvider(provider);
 
 
 console.log(ceramic)
@@ -56,7 +59,7 @@ class MoveSaver implements MoveSaverDef {
     // const ceramic = new CeramicClient(API_URL)
     // const seed = randomBytes(32)
     // const provider = new Ed25519Provider(seed)
-    // const did = new DID({ provider, resolver: KeyDidResolver.getResolver() })
+    // const did = new DID({ provider, resolver: KeyResolver.getResolver() })
     // ceramic.did = did
     // ceramic.did.setProvider(provider)
       // await ceramic.did.authenticate()
