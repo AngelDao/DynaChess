@@ -17,8 +17,10 @@ import {
 // Services
 
 export interface MoveSaverDef {
-    readMoves: (ceramicId: string, callParams: CallParams<'ceramicId'>) => { moves: string[]; } | Promise<{ moves: string[]; }>;
-    saveMoves: (move_json: string, ceramicId: string, callParams: CallParams<'move_json' | 'ceramicId'>) => { ceramicId: string; } | Promise<{ ceramicId: string; }>;
+    generateDoc: (callParams: CallParams<null>) => { ceramicId: string; } | Promise<{ ceramicId: string; }>;
+    readInfo: (callParams: CallParams<null>) => string[] | Promise<string[]>;
+    readMoves: (callParams: CallParams<null>) => { moves: string[]; } | Promise<{ moves: string[]; }>;
+    saveMoves: (move_json: string, callParams: CallParams<'move_json'>) => { ceramicId: string; } | Promise<{ ceramicId: string; }>;
 }
 export function registerMoveSaver(service: MoveSaverDef): void;
 export function registerMoveSaver(serviceId: string, service: MoveSaverDef): void;
@@ -33,14 +35,24 @@ export function registerMoveSaver(...args: any) {
     "defaultServiceId" : "movesaver",
     "functions" : [
         {
+            "functionName" : "generateDoc",
+            "argDefs" : [
+            ],
+            "returnType" : {
+                "tag" : "primitive"
+            }
+        },
+        {
+            "functionName" : "readInfo",
+            "argDefs" : [
+            ],
+            "returnType" : {
+                "tag" : "primitive"
+            }
+        },
+        {
             "functionName" : "readMoves",
             "argDefs" : [
-                {
-                    "name" : "ceramicId",
-                    "argType" : {
-                        "tag" : "primitive"
-                    }
-                }
             ],
             "returnType" : {
                 "tag" : "primitive"
@@ -51,12 +63,6 @@ export function registerMoveSaver(...args: any) {
             "argDefs" : [
                 {
                     "name" : "move_json",
-                    "argType" : {
-                        "tag" : "primitive"
-                    }
-                },
-                {
-                    "name" : "ceramicId",
                     "argType" : {
                         "tag" : "primitive"
                     }
@@ -72,6 +78,178 @@ export function registerMoveSaver(...args: any) {
 }
       
 // Functions
+ 
+
+export function read_info(relay: string, peer_: string, config?: {ttl?: number}): Promise<string[]>;
+export function read_info(peer: FluencePeer, relay: string, peer_: string, config?: {ttl?: number}): Promise<string[]>;
+export function read_info(...args: any) {
+
+    let script = `
+                        (xor
+                     (seq
+                      (seq
+                       (seq
+                        (seq
+                         (seq
+                          (seq
+                           (seq
+                            (seq
+                             (call %init_peer_id% ("getDataSrv" "-relay-") [] -relay-)
+                             (call %init_peer_id% ("getDataSrv" "relay") [] relay)
+                            )
+                            (call %init_peer_id% ("getDataSrv" "peer") [] peer)
+                           )
+                           (call -relay- ("op" "noop") [])
+                          )
+                          (call relay ("op" "noop") [])
+                         )
+                         (xor
+                          (call peer ("movesaver" "readInfo") [] $result)
+                          (seq
+                           (seq
+                            (seq
+                             (call relay ("op" "noop") [])
+                             (call -relay- ("op" "noop") [])
+                            )
+                            (call %init_peer_id% ("errorHandlingSrv" "error") [%last_error% 1])
+                           )
+                           (call -relay- ("op" "noop") [])
+                          )
+                         )
+                        )
+                        (call relay ("op" "noop") [])
+                       )
+                       (call -relay- ("op" "noop") [])
+                      )
+                      (xor
+                       (call %init_peer_id% ("callbackSrv" "response") [$result])
+                       (call %init_peer_id% ("errorHandlingSrv" "error") [%last_error% 2])
+                      )
+                     )
+                     (call %init_peer_id% ("errorHandlingSrv" "error") [%last_error% 3])
+                    )
+    `
+    return callFunction(
+        args,
+        {
+    "functionName" : "read_info",
+    "returnType" : {
+        "tag" : "primitive"
+    },
+    "argDefs" : [
+        {
+            "name" : "relay",
+            "argType" : {
+                "tag" : "primitive"
+            }
+        },
+        {
+            "name" : "peer",
+            "argType" : {
+                "tag" : "primitive"
+            }
+        }
+    ],
+    "names" : {
+        "relay" : "-relay-",
+        "getDataSrv" : "getDataSrv",
+        "callbackSrv" : "callbackSrv",
+        "responseSrv" : "callbackSrv",
+        "responseFnName" : "response",
+        "errorHandlingSrv" : "errorHandlingSrv",
+        "errorFnName" : "error"
+    }
+},
+        script
+    )
+}
+
+ 
+export type GenerateDocResult = { ceramicId: string; }
+export function generateDoc(relay: string, peer_: string, config?: {ttl?: number}): Promise<GenerateDocResult>;
+export function generateDoc(peer: FluencePeer, relay: string, peer_: string, config?: {ttl?: number}): Promise<GenerateDocResult>;
+export function generateDoc(...args: any) {
+
+    let script = `
+                        (xor
+                     (seq
+                      (seq
+                       (seq
+                        (seq
+                         (seq
+                          (seq
+                           (seq
+                            (seq
+                             (call %init_peer_id% ("getDataSrv" "-relay-") [] -relay-)
+                             (call %init_peer_id% ("getDataSrv" "relay") [] relay)
+                            )
+                            (call %init_peer_id% ("getDataSrv" "peer") [] peer)
+                           )
+                           (call -relay- ("op" "noop") [])
+                          )
+                          (call relay ("op" "noop") [])
+                         )
+                         (xor
+                          (call peer ("movesaver" "generateDoc") [] result)
+                          (seq
+                           (seq
+                            (seq
+                             (call relay ("op" "noop") [])
+                             (call -relay- ("op" "noop") [])
+                            )
+                            (call %init_peer_id% ("errorHandlingSrv" "error") [%last_error% 1])
+                           )
+                           (call -relay- ("op" "noop") [])
+                          )
+                         )
+                        )
+                        (call relay ("op" "noop") [])
+                       )
+                       (call -relay- ("op" "noop") [])
+                      )
+                      (xor
+                       (call %init_peer_id% ("callbackSrv" "response") [result])
+                       (call %init_peer_id% ("errorHandlingSrv" "error") [%last_error% 2])
+                      )
+                     )
+                     (call %init_peer_id% ("errorHandlingSrv" "error") [%last_error% 3])
+                    )
+    `
+    return callFunction(
+        args,
+        {
+    "functionName" : "generateDoc",
+    "returnType" : {
+        "tag" : "primitive"
+    },
+    "argDefs" : [
+        {
+            "name" : "relay",
+            "argType" : {
+                "tag" : "primitive"
+            }
+        },
+        {
+            "name" : "peer",
+            "argType" : {
+                "tag" : "primitive"
+            }
+        }
+    ],
+    "names" : {
+        "relay" : "-relay-",
+        "getDataSrv" : "getDataSrv",
+        "callbackSrv" : "callbackSrv",
+        "responseSrv" : "callbackSrv",
+        "responseFnName" : "response",
+        "errorHandlingSrv" : "errorHandlingSrv",
+        "errorFnName" : "error"
+    }
+},
+        script
+    )
+}
+
  
 export type Save_movesResult = { ceramicId: string; }
 export function save_moves(relay: string, peer_: string, move_json: string, ceramic_id: string, config?: {ttl?: number}): Promise<Save_movesResult>;
@@ -104,7 +282,7 @@ export function save_moves(...args: any) {
                           (call relay ("op" "noop") [])
                          )
                          (xor
-                          (call peer ("movesaver" "saveMoves") [move_json ceramic_id] result)
+                          (call peer ("movesaver" "saveMoves") [move_json] result)
                           (seq
                            (seq
                             (seq
@@ -205,7 +383,7 @@ export function read_moves(...args: any) {
                           (call relay ("op" "noop") [])
                          )
                          (xor
-                          (call peer ("movesaver" "readMoves") [ceramic_id] result)
+                          (call peer ("movesaver" "readMoves") [] result)
                           (seq
                            (seq
                             (seq

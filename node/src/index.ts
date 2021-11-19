@@ -21,43 +21,59 @@ ceramic.did = did
 
 interface SaveResult {
   ceramicId: string;
+  msg: string;
 }
 
 interface ReadResult {
   moves: Array<string>
 }
 
+interface ConfigInfo {
+  doc: any;
+  id: any;
+}
+
 class MoveSaver implements MoveSaverDef {
-  async saveMoves(move_json: string, ceramicId: string): Promise<SaveResult> {
-    if (ceramicId && ceramicId.length > 0){
-      const doc = await TileDocument.load(ceramic, ceramicId);
+  constructor(){
+    this.doc = null;
+    this.id = null;
+  }
+
+  readInfo() {
+    return [this.doc, this.id ]
+  }
+
+  async generateDoc(move_json) {
+    this.doc = await TileDocument.create(
+      ceramic,
+      JSON.parse(move_json)
+    );
+    this.id = this.doc.id.toString()
+    let result = {} as SaveResult;
+    result.msg = "success";
+    return result
+  }
+
+
+  async saveMoves(move_json: string): Promise<SaveResult> {
+    if (this.id && this.id.length > 0){
+      const doc = await TileDocument.load(ceramic, this.id);
       await doc.update(JSON.parse(move_json));
-
       let result = {} as SaveResult;
-      result.ceramicId = ceramicId;
-
+      result.msg = "success";
       return result;
-    } else {
-      const doc = await TileDocument.create(
-        ceramic,
-        JSON.parse(move_json)
-      );
-
-      const streamId = doc.id.toString();
-
+    }else {
+      await this.generateDoc();
       let result = {} as SaveResult;
-      result.ceramicId = streamId;
-
-      return result;
+      result.msg = "success";
+      return result
     }
   }
-  async readMoves(ceramicId: string): Promise<ReadResult> {
-    const doc = await TileDocument.load(ceramic, ceramicId);
-
+  async readMoves(): Promise<ReadResult> {
+    const doc = await TileDocument.load(ceramic, this.id);
     let result = {} as ReadResult;
     console.log("Doc Content: ", doc.content)
     result.moves = doc.content.moves;
-    
     return result;
   }
 }

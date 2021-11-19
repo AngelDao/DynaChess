@@ -5,15 +5,27 @@ data ReadResult:
     moves: []string
 
 service MoveSaver("movesaver"):
-    saveMoves(move_json: string, ceramicId: string) -> SaveResult
-    readMoves(ceramicId: string) -> ReadResult
+    generateDoc() -> SaveResult
+    readInfo() -> *string
+    saveMoves(move_json: string) -> SaveResult
+    readMoves() -> ReadResult
+
+func read_info(relay: string, peer:string) -> *string:
+    on peer via relay:
+        result <- MoveSaver.readInfo()
+    <- result
+
+func generateDoc(relay: string, peer:string, moveJson:string) -> SaveResult:
+    on peer via relay:
+        result <- MoveSaver.generateDoc(moveJson)
+    <- result
 
 func save_moves(relay: string, peer:string, move_json: string, ceramic_id: string) -> SaveResult:
     on peer via relay:
-        result <- MoveSaver.saveMoves(move_json, ceramic_id)
+        result <- MoveSaver.saveMoves(move_json)
     <- result
 
 func read_moves(relay: string, peer:string, ceramic_id: string) -> ReadResult:
     on peer via relay:
-        result <- MoveSaver.readMoves(ceramic_id)
+        result <- MoveSaver.readMoves()
     <- result
