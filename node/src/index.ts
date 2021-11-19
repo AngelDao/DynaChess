@@ -12,15 +12,15 @@ import ThreeIdResolver from '@ceramicnetwork/3id-did-resolver'
 import { DID } from 'dids'
 
 // write/read node for ceramic testnet
-// const API_URL = 'https://ceramic-clay.3boxlabs.com'
-// const ceramic = new CeramicClient(API_URL)
-// const seed = randomBytes(32)
-// const provider = new Ed25519Provider(seed)
-// const did = new DID({ provider, resolver: KeyDidResolver.getResolver() })
-// ceramic.did = did
-// ceramic.did.setProvider(provider)
+const API_URL = 'https://ceramic-clay.3boxlabs.com'
+const ceramic = new CeramicClient(API_URL)
+const seed = randomBytes(32)
+const provider = new Ed25519Provider(seed)
+const did = new DID({ provider, resolver: KeyDidResolver.getResolver() })
+ceramic.did = did
+ceramic.did.setProvider(provider)
 
-console.log(TileDocument)
+console.log(ceramic.context.api)
 
 interface SaveResult {
   ceramicId: string;
@@ -44,30 +44,30 @@ class MoveSaver implements MoveSaverDef {
   }
   
   readInfo() {
-    return [this.doc, this.id ]
+    return ceramic._api
   }
   
   async generateDoc(move_json) {
-    const API_URL = 'https://gateway.ceramic.network'
-    const ceramic = new CeramicClient(API_URL)
-    const seed = randomBytes(32)
-    const provider = new Ed25519Provider(seed)
-    const did = new DID({ provider, resolver: KeyDidResolver.getResolver() })
-    ceramic.did = did
-    ceramic.did.setProvider(provider)
-    await ceramic.did.authenticate()
+    // const API_URL = 'https://gateway.ceramic.network'
+    // const ceramic = new CeramicClient(API_URL)
+    // const seed = randomBytes(32)
+    // const provider = new Ed25519Provider(seed)
+    // const did = new DID({ provider, resolver: KeyDidResolver.getResolver() })
+    // ceramic.did = did
+    // ceramic.did.setProvider(provider)
+      await ceramic.did.authenticate()
     
-    const doc = await TileDocument.create(
-      ceramic,
-      JSON.parse(move_json)
-    );
-    const id  = doc.id.toString();
-    let result = {} as SaveResult;
-    result.ceramicId = id;
-    result.doc = doc;
-    result.msg = "success";
-    return result;
-  }
+      const doc = await TileDocument.create(
+        ceramic,
+        {foo:"bar"}
+      );
+      const id  = doc.id.toString();
+      let result = {} as SaveResult;
+      result.ceramicId = id;
+      result.doc = doc;
+      result.msg = "success";
+      return result;
+    }
     
     
     async saveMoves(move_json: string): Promise<SaveResult> {
