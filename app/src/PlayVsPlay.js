@@ -8,7 +8,7 @@ import { save_moves, read_moves, read_info, generateDoc } from "./_aqua/moves";
 
 const relayNode =
   "/dns4/kras-00.fluence.dev/tcp/19990/wss/p2p/12D3KooWSD5PToNiLQwKDXsu8JSysCwUt8BVUJEqCHcDe7P5h45e";
-const peerId = "12D3KooWLL4Lypvb9gGYRHh6TvcaKXkUvNQJdv4u1uwF1xoeWJzp";
+const peerId = "12D3KooWDTW6Jo3GZDsQ5Pp8qHYn3L91dGCzd2bcgef961WXSAX2";
 const relayPeerId = "12D3KooWSD5PToNiLQwKDXsu8JSysCwUt8BVUJEqCHcDe7P5h45e";
 const ceramicId = "https://gateway.ceramic.network";
 
@@ -56,7 +56,7 @@ export default function PlayVsPlay() {
     const myJson = JSON.stringify({ moves: gameHistory });
     console.log(save_moves);
     // const saveRes = await save_moves(relayPeerId, peerId, myJson, ceramicId);
-    const res = await read_info(relayPeerId, peerId);
+    // const res = await read_info(relayPeerId, peerId);
     const res2 = await generateDoc(relayPeerId, peerId, myJson);
     const res3 = await read_info(relayPeerId, peerId);
     debugger;

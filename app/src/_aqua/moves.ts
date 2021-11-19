@@ -6,87 +6,92 @@
  * Aqua version: 0.5.0-SNAPSHOT
  *
  */
-import { Fluence, FluencePeer } from '@fluencelabs/fluence';
-import {
-    CallParams,
-    callFunction,
-    registerService,
-} from '@fluencelabs/fluence/dist/internal/compilerSupport/v2';
-
-
-// Services
-
-export interface MoveSaverDef {
-    generateDoc: (callParams: CallParams<null>) => { ceramicId: string; } | Promise<{ ceramicId: string; }>;
-    readInfo: (callParams: CallParams<null>) => string[] | Promise<string[]>;
-    readMoves: (callParams: CallParams<null>) => { moves: string[]; } | Promise<{ moves: string[]; }>;
-    saveMoves: (move_json: string, callParams: CallParams<'move_json'>) => { ceramicId: string; } | Promise<{ ceramicId: string; }>;
-}
-export function registerMoveSaver(service: MoveSaverDef): void;
-export function registerMoveSaver(serviceId: string, service: MoveSaverDef): void;
-export function registerMoveSaver(peer: FluencePeer, service: MoveSaverDef): void;
-export function registerMoveSaver(peer: FluencePeer, serviceId: string, service: MoveSaverDef): void;
+ import { Fluence, FluencePeer } from '@fluencelabs/fluence';
+ import {
+     CallParams,
+     callFunction,
+     registerService,
+ } from '@fluencelabs/fluence/dist/internal/compilerSupport/v2';
+ 
+ 
+ // Services
+ 
+ export interface MoveSaverDef {
+     generateDoc: (move_json: string, callParams: CallParams<'move_json'>) => { ceramicId: string; } | Promise<{ ceramicId: string; }>;
+     readInfo: (callParams: CallParams<null>) => string[] | Promise<string[]>;
+     readMoves: (callParams: CallParams<null>) => { moves: string[]; } | Promise<{ moves: string[]; }>;
+     saveMoves: (move_json: string, callParams: CallParams<'move_json'>) => { ceramicId: string; } | Promise<{ ceramicId: string; }>;
+ }
+ export function registerMoveSaver(service: MoveSaverDef): void;
+ export function registerMoveSaver(serviceId: string, service: MoveSaverDef): void;
+ export function registerMoveSaver(peer: FluencePeer, service: MoveSaverDef): void;
+ export function registerMoveSaver(peer: FluencePeer, serviceId: string, service: MoveSaverDef): void;
+        
+ 
+ export function registerMoveSaver(...args: any) {
+     registerService(
+         args,
+         {
+     "defaultServiceId" : "movesaver",
+     "functions" : [
+         {
+             "functionName" : "generateDoc",
+             "argDefs" : [
+                 {
+                     "name" : "move_json",
+                     "argType" : {
+                         "tag" : "primitive"
+                     }
+                 }
+             ],
+             "returnType" : {
+                 "tag" : "primitive"
+             }
+         },
+         {
+             "functionName" : "readInfo",
+             "argDefs" : [
+             ],
+             "returnType" : {
+                 "tag" : "primitive"
+             }
+         },
+         {
+             "functionName" : "readMoves",
+             "argDefs" : [
+             ],
+             "returnType" : {
+                 "tag" : "primitive"
+             }
+         },
+         {
+             "functionName" : "saveMoves",
+             "argDefs" : [
+                 {
+                     "name" : "move_json",
+                     "argType" : {
+                         "tag" : "primitive"
+                     }
+                 }
+             ],
+             "returnType" : {
+                 "tag" : "primitive"
+             }
+         }
+     ]
+ }
+     );
+ }
        
-
-export function registerMoveSaver(...args: any) {
-    registerService(
-        args,
-        {
-    "defaultServiceId" : "movesaver",
-    "functions" : [
-        {
-            "functionName" : "generateDoc",
-            "argDefs" : [
-            ],
-            "returnType" : {
-                "tag" : "primitive"
-            }
-        },
-        {
-            "functionName" : "readInfo",
-            "argDefs" : [
-            ],
-            "returnType" : {
-                "tag" : "primitive"
-            }
-        },
-        {
-            "functionName" : "readMoves",
-            "argDefs" : [
-            ],
-            "returnType" : {
-                "tag" : "primitive"
-            }
-        },
-        {
-            "functionName" : "saveMoves",
-            "argDefs" : [
-                {
-                    "name" : "move_json",
-                    "argType" : {
-                        "tag" : "primitive"
-                    }
-                }
-            ],
-            "returnType" : {
-                "tag" : "primitive"
-            }
-        }
-    ]
-}
-    );
-}
-      
-// Functions
+ // Functions
+  
  
-
-export function read_info(relay: string, peer_: string, config?: {ttl?: number}): Promise<string[]>;
-export function read_info(peer: FluencePeer, relay: string, peer_: string, config?: {ttl?: number}): Promise<string[]>;
-export function read_info(...args: any) {
-
-    let script = `
-                        (xor
-                     (seq
+ export function read_info(relay: string, peer_: string, config?: {ttl?: number}): Promise<string[]>;
+ export function read_info(peer: FluencePeer, relay: string, peer_: string, config?: {ttl?: number}): Promise<string[]>;
+ export function read_info(...args: any) {
+ 
+     let script = `
+                         (xor
                       (seq
                        (seq
                         (seq
@@ -94,171 +99,85 @@ export function read_info(...args: any) {
                           (seq
                            (seq
                             (seq
-                             (call %init_peer_id% ("getDataSrv" "-relay-") [] -relay-)
-                             (call %init_peer_id% ("getDataSrv" "relay") [] relay)
+                             (seq
+                              (call %init_peer_id% ("getDataSrv" "-relay-") [] -relay-)
+                              (call %init_peer_id% ("getDataSrv" "relay") [] relay)
+                             )
+                             (call %init_peer_id% ("getDataSrv" "peer") [] peer)
                             )
-                            (call %init_peer_id% ("getDataSrv" "peer") [] peer)
+                            (call -relay- ("op" "noop") [])
                            )
-                           (call -relay- ("op" "noop") [])
+                           (call relay ("op" "noop") [])
                           )
-                          (call relay ("op" "noop") [])
-                         )
-                         (xor
-                          (call peer ("movesaver" "readInfo") [] $result)
-                          (seq
+                          (xor
+                           (call peer ("movesaver" "readInfo") [] $result)
                            (seq
                             (seq
-                             (call relay ("op" "noop") [])
-                             (call -relay- ("op" "noop") [])
+                             (seq
+                              (call relay ("op" "noop") [])
+                              (call -relay- ("op" "noop") [])
+                             )
+                             (call %init_peer_id% ("errorHandlingSrv" "error") [%last_error% 1])
                             )
-                            (call %init_peer_id% ("errorHandlingSrv" "error") [%last_error% 1])
+                            (call -relay- ("op" "noop") [])
                            )
-                           (call -relay- ("op" "noop") [])
                           )
                          )
+                         (call relay ("op" "noop") [])
                         )
-                        (call relay ("op" "noop") [])
+                        (call -relay- ("op" "noop") [])
                        )
-                       (call -relay- ("op" "noop") [])
+                       (xor
+                        (call %init_peer_id% ("callbackSrv" "response") [$result])
+                        (call %init_peer_id% ("errorHandlingSrv" "error") [%last_error% 2])
+                       )
                       )
-                      (xor
-                       (call %init_peer_id% ("callbackSrv" "response") [$result])
-                       (call %init_peer_id% ("errorHandlingSrv" "error") [%last_error% 2])
-                      )
+                      (call %init_peer_id% ("errorHandlingSrv" "error") [%last_error% 3])
                      )
-                     (call %init_peer_id% ("errorHandlingSrv" "error") [%last_error% 3])
-                    )
-    `
-    return callFunction(
-        args,
-        {
-    "functionName" : "read_info",
-    "returnType" : {
-        "tag" : "primitive"
-    },
-    "argDefs" : [
-        {
-            "name" : "relay",
-            "argType" : {
-                "tag" : "primitive"
-            }
-        },
-        {
-            "name" : "peer",
-            "argType" : {
-                "tag" : "primitive"
-            }
-        }
-    ],
-    "names" : {
-        "relay" : "-relay-",
-        "getDataSrv" : "getDataSrv",
-        "callbackSrv" : "callbackSrv",
-        "responseSrv" : "callbackSrv",
-        "responseFnName" : "response",
-        "errorHandlingSrv" : "errorHandlingSrv",
-        "errorFnName" : "error"
-    }
-},
-        script
-    )
-}
-
+     `
+     return callFunction(
+         args,
+         {
+     "functionName" : "read_info",
+     "returnType" : {
+         "tag" : "primitive"
+     },
+     "argDefs" : [
+         {
+             "name" : "relay",
+             "argType" : {
+                 "tag" : "primitive"
+             }
+         },
+         {
+             "name" : "peer",
+             "argType" : {
+                 "tag" : "primitive"
+             }
+         }
+     ],
+     "names" : {
+         "relay" : "-relay-",
+         "getDataSrv" : "getDataSrv",
+         "callbackSrv" : "callbackSrv",
+         "responseSrv" : "callbackSrv",
+         "responseFnName" : "response",
+         "errorHandlingSrv" : "errorHandlingSrv",
+         "errorFnName" : "error"
+     }
+ },
+         script
+     )
+ }
  
-export type GenerateDocResult = { ceramicId: string; }
-export function generateDoc(relay: string, peer_: string, config?: {ttl?: number}): Promise<GenerateDocResult>;
-export function generateDoc(peer: FluencePeer, relay: string, peer_: string, config?: {ttl?: number}): Promise<GenerateDocResult>;
-export function generateDoc(...args: any) {
-
-    let script = `
-                        (xor
-                     (seq
-                      (seq
-                       (seq
-                        (seq
-                         (seq
-                          (seq
-                           (seq
-                            (seq
-                             (call %init_peer_id% ("getDataSrv" "-relay-") [] -relay-)
-                             (call %init_peer_id% ("getDataSrv" "relay") [] relay)
-                            )
-                            (call %init_peer_id% ("getDataSrv" "peer") [] peer)
-                           )
-                           (call -relay- ("op" "noop") [])
-                          )
-                          (call relay ("op" "noop") [])
-                         )
+  
+ export type GenerateDocResult = { ceramicId: string; }
+ export function generateDoc(relay: string, peer_: string, moveJson: string, config?: {ttl?: number}): Promise<GenerateDocResult>;
+ export function generateDoc(peer: FluencePeer, relay: string, peer_: string, moveJson: string, config?: {ttl?: number}): Promise<GenerateDocResult>;
+ export function generateDoc(...args: any) {
+ 
+     let script = `
                          (xor
-                          (call peer ("movesaver" "generateDoc") [] result)
-                          (seq
-                           (seq
-                            (seq
-                             (call relay ("op" "noop") [])
-                             (call -relay- ("op" "noop") [])
-                            )
-                            (call %init_peer_id% ("errorHandlingSrv" "error") [%last_error% 1])
-                           )
-                           (call -relay- ("op" "noop") [])
-                          )
-                         )
-                        )
-                        (call relay ("op" "noop") [])
-                       )
-                       (call -relay- ("op" "noop") [])
-                      )
-                      (xor
-                       (call %init_peer_id% ("callbackSrv" "response") [result])
-                       (call %init_peer_id% ("errorHandlingSrv" "error") [%last_error% 2])
-                      )
-                     )
-                     (call %init_peer_id% ("errorHandlingSrv" "error") [%last_error% 3])
-                    )
-    `
-    return callFunction(
-        args,
-        {
-    "functionName" : "generateDoc",
-    "returnType" : {
-        "tag" : "primitive"
-    },
-    "argDefs" : [
-        {
-            "name" : "relay",
-            "argType" : {
-                "tag" : "primitive"
-            }
-        },
-        {
-            "name" : "peer",
-            "argType" : {
-                "tag" : "primitive"
-            }
-        }
-    ],
-    "names" : {
-        "relay" : "-relay-",
-        "getDataSrv" : "getDataSrv",
-        "callbackSrv" : "callbackSrv",
-        "responseSrv" : "callbackSrv",
-        "responseFnName" : "response",
-        "errorHandlingSrv" : "errorHandlingSrv",
-        "errorFnName" : "error"
-    }
-},
-        script
-    )
-}
-
- 
-export type Save_movesResult = { ceramicId: string; }
-export function save_moves(relay: string, peer_: string, move_json: string, ceramic_id: string, config?: {ttl?: number}): Promise<Save_movesResult>;
-export function save_moves(peer: FluencePeer, relay: string, peer_: string, move_json: string, ceramic_id: string, config?: {ttl?: number}): Promise<Save_movesResult>;
-export function save_moves(...args: any) {
-
-    let script = `
-                        (xor
-                     (seq
                       (seq
                        (seq
                         (seq
@@ -273,96 +192,87 @@ export function save_moves(...args: any) {
                               )
                               (call %init_peer_id% ("getDataSrv" "peer") [] peer)
                              )
-                             (call %init_peer_id% ("getDataSrv" "move_json") [] move_json)
+                             (call %init_peer_id% ("getDataSrv" "moveJson") [] moveJson)
                             )
-                            (call %init_peer_id% ("getDataSrv" "ceramic_id") [] ceramic_id)
+                            (call -relay- ("op" "noop") [])
                            )
-                           (call -relay- ("op" "noop") [])
+                           (call relay ("op" "noop") [])
                           )
-                          (call relay ("op" "noop") [])
-                         )
-                         (xor
-                          (call peer ("movesaver" "saveMoves") [move_json] result)
-                          (seq
+                          (xor
+                           (call peer ("movesaver" "generateDoc") [moveJson] result)
                            (seq
                             (seq
-                             (call relay ("op" "noop") [])
-                             (call -relay- ("op" "noop") [])
+                             (seq
+                              (call relay ("op" "noop") [])
+                              (call -relay- ("op" "noop") [])
+                             )
+                             (call %init_peer_id% ("errorHandlingSrv" "error") [%last_error% 1])
                             )
-                            (call %init_peer_id% ("errorHandlingSrv" "error") [%last_error% 1])
+                            (call -relay- ("op" "noop") [])
                            )
-                           (call -relay- ("op" "noop") [])
                           )
                          )
+                         (call relay ("op" "noop") [])
                         )
-                        (call relay ("op" "noop") [])
+                        (call -relay- ("op" "noop") [])
                        )
-                       (call -relay- ("op" "noop") [])
+                       (xor
+                        (call %init_peer_id% ("callbackSrv" "response") [result])
+                        (call %init_peer_id% ("errorHandlingSrv" "error") [%last_error% 2])
+                       )
                       )
-                      (xor
-                       (call %init_peer_id% ("callbackSrv" "response") [result])
-                       (call %init_peer_id% ("errorHandlingSrv" "error") [%last_error% 2])
-                      )
+                      (call %init_peer_id% ("errorHandlingSrv" "error") [%last_error% 3])
                      )
-                     (call %init_peer_id% ("errorHandlingSrv" "error") [%last_error% 3])
-                    )
-    `
-    return callFunction(
-        args,
-        {
-    "functionName" : "save_moves",
-    "returnType" : {
-        "tag" : "primitive"
-    },
-    "argDefs" : [
-        {
-            "name" : "relay",
-            "argType" : {
-                "tag" : "primitive"
-            }
-        },
-        {
-            "name" : "peer",
-            "argType" : {
-                "tag" : "primitive"
-            }
-        },
-        {
-            "name" : "move_json",
-            "argType" : {
-                "tag" : "primitive"
-            }
-        },
-        {
-            "name" : "ceramic_id",
-            "argType" : {
-                "tag" : "primitive"
-            }
-        }
-    ],
-    "names" : {
-        "relay" : "-relay-",
-        "getDataSrv" : "getDataSrv",
-        "callbackSrv" : "callbackSrv",
-        "responseSrv" : "callbackSrv",
-        "responseFnName" : "response",
-        "errorHandlingSrv" : "errorHandlingSrv",
-        "errorFnName" : "error"
-    }
-},
-        script
-    )
-}
-
+     `
+     return callFunction(
+         args,
+         {
+     "functionName" : "generateDoc",
+     "returnType" : {
+         "tag" : "primitive"
+     },
+     "argDefs" : [
+         {
+             "name" : "relay",
+             "argType" : {
+                 "tag" : "primitive"
+             }
+         },
+         {
+             "name" : "peer",
+             "argType" : {
+                 "tag" : "primitive"
+             }
+         },
+         {
+             "name" : "moveJson",
+             "argType" : {
+                 "tag" : "primitive"
+             }
+         }
+     ],
+     "names" : {
+         "relay" : "-relay-",
+         "getDataSrv" : "getDataSrv",
+         "callbackSrv" : "callbackSrv",
+         "responseSrv" : "callbackSrv",
+         "responseFnName" : "response",
+         "errorHandlingSrv" : "errorHandlingSrv",
+         "errorFnName" : "error"
+     }
+ },
+         script
+     )
+ }
  
-export type Read_movesResult = { moves: string[]; }
-export function read_moves(relay: string, peer_: string, ceramic_id: string, config?: {ttl?: number}): Promise<Read_movesResult>;
-export function read_moves(peer: FluencePeer, relay: string, peer_: string, ceramic_id: string, config?: {ttl?: number}): Promise<Read_movesResult>;
-export function read_moves(...args: any) {
-
-    let script = `
-                        (xor
-                     (seq
+  
+ export type Save_movesResult = { ceramicId: string; }
+ export function save_moves(relay: string, peer_: string, move_json: string, ceramic_id: string, config?: {ttl?: number}): Promise<Save_movesResult>;
+ export function save_moves(peer: FluencePeer, relay: string, peer_: string, move_json: string, ceramic_id: string, config?: {ttl?: number}): Promise<Save_movesResult>;
+ export function save_moves(...args: any) {
+ 
+     let script = `
+                         (xor
                       (seq
                        (seq
                         (seq
@@ -371,80 +281,186 @@ export function read_moves(...args: any) {
                            (seq
                             (seq
                              (seq
-                              (call %init_peer_id% ("getDataSrv" "-relay-") [] -relay-)
-                              (call %init_peer_id% ("getDataSrv" "relay") [] relay)
+                              (seq
+                               (seq
+                                (call %init_peer_id% ("getDataSrv" "-relay-") [] -relay-)
+                                (call %init_peer_id% ("getDataSrv" "relay") [] relay)
+                               )
+                               (call %init_peer_id% ("getDataSrv" "peer") [] peer)
+                              )
+                              (call %init_peer_id% ("getDataSrv" "move_json") [] move_json)
                              )
-                             (call %init_peer_id% ("getDataSrv" "peer") [] peer)
+                             (call %init_peer_id% ("getDataSrv" "ceramic_id") [] ceramic_id)
                             )
-                            (call %init_peer_id% ("getDataSrv" "ceramic_id") [] ceramic_id)
+                            (call -relay- ("op" "noop") [])
                            )
-                           (call -relay- ("op" "noop") [])
+                           (call relay ("op" "noop") [])
                           )
-                          (call relay ("op" "noop") [])
+                          (xor
+                           (call peer ("movesaver" "saveMoves") [move_json] result)
+                           (seq
+                            (seq
+                             (seq
+                              (call relay ("op" "noop") [])
+                              (call -relay- ("op" "noop") [])
+                             )
+                             (call %init_peer_id% ("errorHandlingSrv" "error") [%last_error% 1])
+                            )
+                            (call -relay- ("op" "noop") [])
+                           )
+                          )
                          )
+                         (call relay ("op" "noop") [])
+                        )
+                        (call -relay- ("op" "noop") [])
+                       )
+                       (xor
+                        (call %init_peer_id% ("callbackSrv" "response") [result])
+                        (call %init_peer_id% ("errorHandlingSrv" "error") [%last_error% 2])
+                       )
+                      )
+                      (call %init_peer_id% ("errorHandlingSrv" "error") [%last_error% 3])
+                     )
+     `
+     return callFunction(
+         args,
+         {
+     "functionName" : "save_moves",
+     "returnType" : {
+         "tag" : "primitive"
+     },
+     "argDefs" : [
+         {
+             "name" : "relay",
+             "argType" : {
+                 "tag" : "primitive"
+             }
+         },
+         {
+             "name" : "peer",
+             "argType" : {
+                 "tag" : "primitive"
+             }
+         },
+         {
+             "name" : "move_json",
+             "argType" : {
+                 "tag" : "primitive"
+             }
+         },
+         {
+             "name" : "ceramic_id",
+             "argType" : {
+                 "tag" : "primitive"
+             }
+         }
+     ],
+     "names" : {
+         "relay" : "-relay-",
+         "getDataSrv" : "getDataSrv",
+         "callbackSrv" : "callbackSrv",
+         "responseSrv" : "callbackSrv",
+         "responseFnName" : "response",
+         "errorHandlingSrv" : "errorHandlingSrv",
+         "errorFnName" : "error"
+     }
+ },
+         script
+     )
+ }
+ 
+  
+ export type Read_movesResult = { moves: string[]; }
+ export function read_moves(relay: string, peer_: string, ceramic_id: string, config?: {ttl?: number}): Promise<Read_movesResult>;
+ export function read_moves(peer: FluencePeer, relay: string, peer_: string, ceramic_id: string, config?: {ttl?: number}): Promise<Read_movesResult>;
+ export function read_moves(...args: any) {
+ 
+     let script = `
                          (xor
-                          (call peer ("movesaver" "readMoves") [] result)
+                      (seq
+                       (seq
+                        (seq
+                         (seq
                           (seq
                            (seq
                             (seq
-                             (call relay ("op" "noop") [])
-                             (call -relay- ("op" "noop") [])
+                             (seq
+                              (seq
+                               (call %init_peer_id% ("getDataSrv" "-relay-") [] -relay-)
+                               (call %init_peer_id% ("getDataSrv" "relay") [] relay)
+                              )
+                              (call %init_peer_id% ("getDataSrv" "peer") [] peer)
+                             )
+                             (call %init_peer_id% ("getDataSrv" "ceramic_id") [] ceramic_id)
                             )
-                            (call %init_peer_id% ("errorHandlingSrv" "error") [%last_error% 1])
+                            (call -relay- ("op" "noop") [])
                            )
-                           (call -relay- ("op" "noop") [])
+                           (call relay ("op" "noop") [])
+                          )
+                          (xor
+                           (call peer ("movesaver" "readMoves") [] result)
+                           (seq
+                            (seq
+                             (seq
+                              (call relay ("op" "noop") [])
+                              (call -relay- ("op" "noop") [])
+                             )
+                             (call %init_peer_id% ("errorHandlingSrv" "error") [%last_error% 1])
+                            )
+                            (call -relay- ("op" "noop") [])
+                           )
                           )
                          )
+                         (call relay ("op" "noop") [])
                         )
-                        (call relay ("op" "noop") [])
+                        (call -relay- ("op" "noop") [])
                        )
-                       (call -relay- ("op" "noop") [])
+                       (xor
+                        (call %init_peer_id% ("callbackSrv" "response") [result])
+                        (call %init_peer_id% ("errorHandlingSrv" "error") [%last_error% 2])
+                       )
                       )
-                      (xor
-                       (call %init_peer_id% ("callbackSrv" "response") [result])
-                       (call %init_peer_id% ("errorHandlingSrv" "error") [%last_error% 2])
-                      )
+                      (call %init_peer_id% ("errorHandlingSrv" "error") [%last_error% 3])
                      )
-                     (call %init_peer_id% ("errorHandlingSrv" "error") [%last_error% 3])
-                    )
-    `
-    return callFunction(
-        args,
-        {
-    "functionName" : "read_moves",
-    "returnType" : {
-        "tag" : "primitive"
-    },
-    "argDefs" : [
-        {
-            "name" : "relay",
-            "argType" : {
-                "tag" : "primitive"
-            }
-        },
-        {
-            "name" : "peer",
-            "argType" : {
-                "tag" : "primitive"
-            }
-        },
-        {
-            "name" : "ceramic_id",
-            "argType" : {
-                "tag" : "primitive"
-            }
-        }
-    ],
-    "names" : {
-        "relay" : "-relay-",
-        "getDataSrv" : "getDataSrv",
-        "callbackSrv" : "callbackSrv",
-        "responseSrv" : "callbackSrv",
-        "responseFnName" : "response",
-        "errorHandlingSrv" : "errorHandlingSrv",
-        "errorFnName" : "error"
-    }
-},
-        script
-    )
-}
+     `
+     return callFunction(
+         args,
+         {
+     "functionName" : "read_moves",
+     "returnType" : {
+         "tag" : "primitive"
+     },
+     "argDefs" : [
+         {
+             "name" : "relay",
+             "argType" : {
+                 "tag" : "primitive"
+             }
+         },
+         {
+             "name" : "peer",
+             "argType" : {
+                 "tag" : "primitive"
+             }
+         },
+         {
+             "name" : "ceramic_id",
+             "argType" : {
+                 "tag" : "primitive"
+             }
+         }
+     ],
+     "names" : {
+         "relay" : "-relay-",
+         "getDataSrv" : "getDataSrv",
+         "callbackSrv" : "callbackSrv",
+         "responseSrv" : "callbackSrv",
+         "responseFnName" : "response",
+         "errorHandlingSrv" : "errorHandlingSrv",
+         "errorFnName" : "error"
+     }
+ },
+         script
+     )
+ }
+ 

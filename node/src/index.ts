@@ -19,6 +19,8 @@ const resolver = { ...KeyDidResolver.getResolver(),
 const did = new DID({ resolver })
 ceramic.did = did
 
+console.log(ceramic)
+
 interface SaveResult {
   ceramicId: string;
   msg: string;
@@ -34,7 +36,8 @@ interface ConfigInfo {
 }
 
 class MoveSaver implements MoveSaverDef {
-  constructor(){
+  constructor(c){
+    this.ceramic = c
     this.doc = null;
     this.id = null;
   }
@@ -43,9 +46,9 @@ class MoveSaver implements MoveSaverDef {
     return [this.doc, this.id ]
   }
 
-  async generateDoc(move_json) {
+  async generateDoc(move_json: string) {
     this.doc = await TileDocument.create(
-      ceramic,
+      this.ceramic,
       JSON.parse(move_json)
     );
     this.id = this.doc.id.toString()
@@ -57,7 +60,7 @@ class MoveSaver implements MoveSaverDef {
 
   async saveMoves(move_json: string): Promise<SaveResult> {
     if (this.id && this.id.length > 0){
-      const doc = await TileDocument.load(ceramic, this.id);
+      const doc = await TileDocument.load(this.ceramic, this.id);
       await doc.update(JSON.parse(move_json));
       let result = {} as SaveResult;
       result.msg = "success";
@@ -70,7 +73,7 @@ class MoveSaver implements MoveSaverDef {
     }
   }
   async readMoves(): Promise<ReadResult> {
-    const doc = await TileDocument.load(ceramic, this.id);
+    const doc = await TileDocument.load(this.ceramic, this.id);
     let result = {} as ReadResult;
     console.log("Doc Content: ", doc.content)
     result.moves = doc.content.moves;
@@ -82,7 +85,7 @@ async function main() {
   await Fluence.start({
     connectTo: krasnodar[0],
   });
-  registerMoveSaver(new MoveSaver());
+  registerMoveSaver(new MoveSaver(ceramic));
   console.log("application started", Fluence.getStatus());
   console.log("peer id is: ", Fluence.getStatus().peerId);
   console.log("relay is: ", Fluence.getStatus().relayPeerId);
