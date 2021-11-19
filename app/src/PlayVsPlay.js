@@ -7,7 +7,7 @@ import { krasnodar } from "@fluencelabs/fluence-network-environment";
 import { save_moves, read_moves } from "./_aqua/moves";
 
 const relayNode = "/dns4/kras-00.fluence.dev/tcp/19990/wss/p2p/12D3KooWSD5PToNiLQwKDXsu8JSysCwUt8BVUJEqCHcDe7P5h45e";
-const peerId = '12D3KooWNqSpUbLS74D7JVyUQALazrnEBejNLppsSfw26g4DguRn';
+const peerId = '12D3KooWD3VAau944Fd6cd6khWQ8TMyrjkiuN48VoL7jgoHydBtQ';
 const relayPeerId = '12D3KooWSD5PToNiLQwKDXsu8JSysCwUt8BVUJEqCHcDe7P5h45e';
 
 export default function PlayVsPlay() {
@@ -64,7 +64,6 @@ export default function PlayVsPlay() {
     }
     start();
   }, []);
-
   
   function onDrop(sourceSquare, targetSquare) {
     const gameCopy = { ...game };
@@ -118,7 +117,6 @@ export default function PlayVsPlay() {
     </div>
   );
 }
-
 
 const MoveContainer = styled.div`
  border-radius: 3px;
