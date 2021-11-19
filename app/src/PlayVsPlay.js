@@ -59,10 +59,12 @@ export default function PlayVsPlay() {
 
   useEffect(() => {
     async function start() {
-      await Fluence.start({ connectTo: relayNode }).catch((err) => console.log("Client initialization failed", err));
+      await Fluence.start({ connectTo: krasnodar[0] }).catch((err) => console.log("Client initialization failed", err));
       console.log("Fluence connected", Fluence.getStatus().isConnected)
     }
-    start();
+    if (!Fluence.getStatus().isConnected){
+      start();
+    }
   }, []);
   
   function onDrop(sourceSquare, targetSquare) {
