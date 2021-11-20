@@ -4,13 +4,16 @@ import styled from "styled-components";
 import { Chessboard } from "react-chessboard";
 import { Fluence } from "@fluencelabs/fluence";
 import { krasnodar } from "@fluencelabs/fluence-network-environment";
-import { save_moves, read_moves, read_info, generateDoc } from "./_aqua/moves";
+import { save_moves, read_moves, read_info, generate_doc } from "./_aqua/moves";
 
 const relayNode =
   "/dns4/kras-00.fluence.dev/tcp/19990/wss/p2p/12D3KooWSD5PToNiLQwKDXsu8JSysCwUt8BVUJEqCHcDe7P5h45e";
-const peerId = "12D3KooWAHdALHfvbxRGC4phfJgmRi9D4WERJ4DPuvnLaiDPYucv";
+const peerId = "12D3KooWFCY8xqebtZqNeiA5took71bUNAedzCCDuCuM1QTdTbWT";
 const relayPeerId = "12D3KooWSD5PToNiLQwKDXsu8JSysCwUt8BVUJEqCHcDe7P5h45e";
 const ceramicId = "https://gateway.ceramic.network";
+
+const currentGame =
+  "kjzl6cwe1jw149pgumj6277cq1dondtbjco3syf945lgivi747tlrdotfki46ez";
 
 export default function PlayVsPlay() {
   const chessboardRef = useRef();
@@ -48,22 +51,18 @@ export default function PlayVsPlay() {
   }
 
   async function sendToFluenceNode() {
-    if (!connectedFluence.getStatus().isConnected) {
+    if (
+      !connectedFluence ||
+      !connectedFluence.getStatus() ||
+      !connectedFluence.getStatus().isConnected
+    ) {
       return;
     }
-    console.log("Sending game", gameHistory, ceramicId);
-
+    console.log("Sending game", gameHistory, currentGame);
     const myJson = JSON.stringify({ moves: gameHistory });
-    // console.log(save_moves);
-    // const saveRes = await save_moves(relayPeerId, peerId, myJson, ceramicId);
-    // const res = await read_info(relayPeerId, peerId);
-    console.log(typeof myJson);
-    console.log(myJson);
-    const res2 = await generateDoc(relayPeerId, peerId, myJson);
-    const res3 = await read_info(relayPeerId, peerId);
-    debugger;
-    const saveRes = await save_moves(relayPeerId, peerId, myJson, ceramicId);
-    console.log("save game", saveRes);
+    const saveRes = await save_moves(relayPeerId, peerId, myJson, currentGame);
+    const movesRes = await read_moves(relayPeerId, peerId, currentGame);
+    console.log("Saved Moves", movesRes);
   }
 
   const connectFluence = async () => {
@@ -84,6 +83,11 @@ export default function PlayVsPlay() {
     })();
   });
 
+  useEffect(() => {
+    sendToFluenceNode();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameHistory]);
+
   function onDrop(sourceSquare, targetSquare) {
     const gameCopy = { ...game };
     const move = gameCopy.move({
@@ -93,9 +97,7 @@ export default function PlayVsPlay() {
     });
     const history = game.history();
     setGameHistory(history);
-    console.log("History", history);
     setGame(gameCopy);
-    sendToFluenceNode();
     return move;
   }
 

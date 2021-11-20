@@ -24,6 +24,7 @@
     "@fluencelabs/fluence-network-environment": "^1.0.10",
     "@stablelib/random": "^1.0.1",
     "dids": "^2.4.2",
+    "ethers": "^5.5.1",
     "key-did-provider-ed25519": "^1.1.0",
     "key-did-resolver": "^1.4.0"
   }

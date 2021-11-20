@@ -17,10 +17,10 @@
  // Services
  
  export interface MoveSaverDef {
-     generateDoc: (move_json: string, callParams: CallParams<'move_json'>) => { ceramicId: string; } | Promise<{ ceramicId: string; }>;
-     readInfo: (callParams: CallParams<null>) => string[] | Promise<string[]>;
-     readMoves: (callParams: CallParams<null>) => { moves: string[]; } | Promise<{ moves: string[]; }>;
-     saveMoves: (move_json: string, callParams: CallParams<'move_json'>) => { ceramicId: string; } | Promise<{ ceramicId: string; }>;
+     generateDoc: (move_json: string, callParams: CallParams<'move_json'>) => { ceramicId: string; msg: string; } | Promise<{ ceramicId: string; msg: string; }>;
+     readDoc: (id: string, callParams: CallParams<'id'>) => string | Promise<string>;
+     readMoves: (ceramic_id: string, callParams: CallParams<'ceramic_id'>) => { moves: string[]; } | Promise<{ moves: string[]; }>;
+     saveMoves: (move_json: string, ceramic_id: string, callParams: CallParams<'move_json' | 'ceramic_id'>) => { ceramicId: string; msg: string; } | Promise<{ ceramicId: string; msg: string; }>;
  }
  export function registerMoveSaver(service: MoveSaverDef): void;
  export function registerMoveSaver(serviceId: string, service: MoveSaverDef): void;
@@ -49,8 +49,14 @@
              }
          },
          {
-             "functionName" : "readInfo",
+             "functionName" : "readDoc",
              "argDefs" : [
+                 {
+                     "name" : "id",
+                     "argType" : {
+                         "tag" : "primitive"
+                     }
+                 }
              ],
              "returnType" : {
                  "tag" : "primitive"
@@ -59,6 +65,12 @@
          {
              "functionName" : "readMoves",
              "argDefs" : [
+                 {
+                     "name" : "ceramic_id",
+                     "argType" : {
+                         "tag" : "primitive"
+                     }
+                 }
              ],
              "returnType" : {
                  "tag" : "primitive"
@@ -69,6 +81,12 @@
              "argDefs" : [
                  {
                      "name" : "move_json",
+                     "argType" : {
+                         "tag" : "primitive"
+                     }
+                 },
+                 {
+                     "name" : "ceramic_id",
                      "argType" : {
                          "tag" : "primitive"
                      }
@@ -86,8 +104,8 @@
  // Functions
   
  
- export function read_info(relay: string, peer_: string, config?: {ttl?: number}): Promise<string[]>;
- export function read_info(peer: FluencePeer, relay: string, peer_: string, config?: {ttl?: number}): Promise<string[]>;
+ export function read_info(relay: string, peer_: string, id: string, config?: {ttl?: number}): Promise<string>;
+ export function read_info(peer: FluencePeer, relay: string, peer_: string, id: string, config?: {ttl?: number}): Promise<string>;
  export function read_info(...args: any) {
  
      let script = `
@@ -100,17 +118,20 @@
                            (seq
                             (seq
                              (seq
-                              (call %init_peer_id% ("getDataSrv" "-relay-") [] -relay-)
-                              (call %init_peer_id% ("getDataSrv" "relay") [] relay)
+                              (seq
+                               (call %init_peer_id% ("getDataSrv" "-relay-") [] -relay-)
+                               (call %init_peer_id% ("getDataSrv" "relay") [] relay)
+                              )
+                              (call %init_peer_id% ("getDataSrv" "peer") [] peer)
                              )
-                             (call %init_peer_id% ("getDataSrv" "peer") [] peer)
+                             (call %init_peer_id% ("getDataSrv" "id") [] id)
                             )
                             (call -relay- ("op" "noop") [])
                            )
                            (call relay ("op" "noop") [])
                           )
                           (xor
-                           (call peer ("movesaver" "readInfo") [] $result)
+                           (call peer ("movesaver" "readDoc") [id] result)
                            (seq
                             (seq
                              (seq
@@ -128,7 +149,7 @@
                         (call -relay- ("op" "noop") [])
                        )
                        (xor
-                        (call %init_peer_id% ("callbackSrv" "response") [$result])
+                        (call %init_peer_id% ("callbackSrv" "response") [result])
                         (call %init_peer_id% ("errorHandlingSrv" "error") [%last_error% 2])
                        )
                       )
@@ -154,6 +175,12 @@
              "argType" : {
                  "tag" : "primitive"
              }
+         },
+         {
+             "name" : "id",
+             "argType" : {
+                 "tag" : "primitive"
+             }
          }
      ],
      "names" : {
@@ -171,10 +198,10 @@
  }
  
   
- export type GenerateDocResult = { ceramicId: string; }
- export function generateDoc(relay: string, peer_: string, moveJson: string, config?: {ttl?: number}): Promise<GenerateDocResult>;
- export function generateDoc(peer: FluencePeer, relay: string, peer_: string, moveJson: string, config?: {ttl?: number}): Promise<GenerateDocResult>;
- export function generateDoc(...args: any) {
+ export type Generate_docResult = { ceramicId: string; msg: string; }
+ export function generate_doc(relay: string, peer_: string, moveJson: string, config?: {ttl?: number}): Promise<Generate_docResult>;
+ export function generate_doc(peer: FluencePeer, relay: string, peer_: string, moveJson: string, config?: {ttl?: number}): Promise<Generate_docResult>;
+ export function generate_doc(...args: any) {
  
      let script = `
                          (xor
@@ -227,7 +254,7 @@
      return callFunction(
          args,
          {
-     "functionName" : "generateDoc",
+     "functionName" : "generate_doc",
      "returnType" : {
          "tag" : "primitive"
      },
@@ -266,7 +293,7 @@
  }
  
   
- export type Save_movesResult = { ceramicId: string; }
+ export type Save_movesResult = { ceramicId: string; msg: string; }
  export function save_moves(relay: string, peer_: string, move_json: string, ceramic_id: string, config?: {ttl?: number}): Promise<Save_movesResult>;
  export function save_moves(peer: FluencePeer, relay: string, peer_: string, move_json: string, ceramic_id: string, config?: {ttl?: number}): Promise<Save_movesResult>;
  export function save_moves(...args: any) {
@@ -297,7 +324,7 @@
                            (call relay ("op" "noop") [])
                           )
                           (xor
-                           (call peer ("movesaver" "saveMoves") [move_json] result)
+                           (call peer ("movesaver" "saveMoves") [move_json ceramic_id] result)
                            (seq
                             (seq
                              (seq
@@ -398,7 +425,7 @@
                            (call relay ("op" "noop") [])
                           )
                           (xor
-                           (call peer ("movesaver" "readMoves") [] result)
+                           (call peer ("movesaver" "readMoves") [ceramic_id] result)
                            (seq
                             (seq
                              (seq

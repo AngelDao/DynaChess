@@ -1,6 +1,6 @@
 // @ts-nocheck
 // /\ unfortunately this is needed to use ceramic...
-import { Fluence } from "@fluencelabs/fluence";
+import { Fluence, KeyPair } from "@fluencelabs/fluence";
 import { krasnodar } from "@fluencelabs/fluence-network-environment";
 import { registerMoveSaver, MoveSaverDef } from "./_aqua/moves";
 import CeramicClient from '@ceramicnetwork/http-client'
@@ -10,60 +10,50 @@ import { TileDocument } from '@ceramicnetwork/stream-tile';
 import KeyResolver from 'key-did-resolver'
 import ThreeIDResolver from '@ceramicnetwork/3id-did-resolver'
 import { DID } from 'dids'
+import {ethers} from "ethers"
 
 // write/read node for ceramic testnet
 (async () => {
   
 const API_URL = 'https://ceramic-clay.3boxlabs.com';
 const ceramic = new CeramicClient(API_URL);
-const seed = new Uint8Array(randomBytes(32));
+const seed = new Uint8Array([
+  134, 221,  59, 223, 109,  42,  34,  45,
+   76, 248, 139, 215,   1,   7, 229, 150,
+   40, 193, 146,  99,   5,   6,   3,  52,
+  123, 139,  77, 159,  58, 195,  20, 151
+]);
 const provider = new Ed25519Provider(seed);
 const keyResolver = KeyResolver.getResolver();
-const threeIDResolver = ThreeIDResolver.getResolver(ceramic);
+console.log(seed)
+console.log(provider)
 const resolverRegistry = {...keyResolver, ...ThreeIDResolver.getResolver(ceramic)};
+console.log(resolverRegistry)
 const did = new DID({ provider, resolver: resolverRegistry });
 await did.authenticate();
 await ceramic.setDID(did); 
 await ceramic.did.setProvider(provider);
 
 
-console.log(ceramic)
-
 interface SaveResult {
   ceramicId: string;
-  doc: any;
-  msg: string;
+  msg:string;
 }
 
 interface ReadResult {
   moves: Array<string>
 }
 
-interface ConfigInfo {
-  doc: any;
-  id: any;
-}
-
 class MoveSaver implements MoveSaverDef {
-  constructor(){
-    this.doc = null;
-    this.id = null;
-  }
-  
-  readInfo() {
-    return ceramic._api
+
+  async readDoc(id){
+    const stream = await ceramic.loadStream(id)
+    console.log(stream)
+    console.log(stream.content)
+    return 'info'
   }
   
   async generateDoc(move_json) {
-    // const API_URL = 'https://gateway.ceramic.network'
-    // const ceramic = new CeramicClient(API_URL)
-    // const seed = randomBytes(32)
-    // const provider = new Ed25519Provider(seed)
-    // const did = new DID({ provider, resolver: KeyResolver.getResolver() })
-    // ceramic.did = did
-    // ceramic.did.setProvider(provider)
-      // await ceramic.did.authenticate()
-    
       const doc = await TileDocument.create(
         ceramic,
         {"foo" : "bar"}
@@ -71,64 +61,49 @@ class MoveSaver implements MoveSaverDef {
       const id  = doc.id.toString();
       let result = {} as SaveResult;
       result.ceramicId = id;
-      result.doc = doc;
-      result.msg = "success";
-      return result;
-    }
+      return result.ceramicId;
+  }
     
     
-    async saveMoves(move_json: string): Promise<SaveResult> {
-      const ceramic = new CeramicClient(API_URL)
-      const provider = new Ed25519Provider(seed)
-      ceramic.did.setProvider(provider)
-      await ceramic.did.authenticate()
-      
-      
-      if (this.id && this.id.length > 0){
-        const doc = await TileDocument.load(ceramic, this.id);
+    async saveMoves(move_json: string, streamId: string): Promise<SaveResult> {
+      if (streamId){
+        console.log(streamId)
+        const doc = await TileDocument.load(ceramic, streamId);
         await doc.update(JSON.parse(move_json));
+        console.log("updated")
         let result = {} as SaveResult;
+        result.ceramicId = streamId
         result.msg = "success";
         return result;
       }else {
-        await this.generateDoc();
         let result = {} as SaveResult;
-        result.msg = "success";
+        result.ceramicId = "";
+        result.msg = "failed"
         return result
       }
     }
-    async readMoves(): Promise<ReadResult> {
-      const ceramic = new CeramicClient(API_URL)
-      const provider = new Ed25519Provider(seed)
-      ceramic.did.setProvider(provider)
-      await ceramic.did.authenticate()
-      
-      const doc = await TileDocument.load(ceramic, this.id);
+    async readMoves(streamId: string): Promise<ReadResult> {
+      console.log(streamId)
+      const stream = await ceramic.loadStream(streamId)
+      console.log(stream)
       let result = {} as ReadResult;
-      console.log("Doc Content: ", doc.content)
-      result.moves = doc.content.moves;
+      console.log("Doc Content: ", stream.content)
+      result.moves = stream.content.moves;
       return result;
     }
   }
   
   async function main() {
+    const SecretKey = "0x0123456789012345678901234567890123456789012345678901234567890123";
+    const skBytes: Uint8Array = ethers.utils.arrayify(SecretKey);
     await Fluence.start({
       connectTo: krasnodar[0],
+      KeyPair: await KeyPair.fromEd25519SK(skBytes)
     });
     registerMoveSaver(new MoveSaver());
     console.log("application started", Fluence.getStatus());
     console.log("peer id is: ", Fluence.getStatus().peerId);
     console.log("relay is: ", Fluence.getStatus().relayPeerId);
-    const doc = await TileDocument.create(
-      ceramic,
-      {"foo" : "bar"}
-    );
-    console.log("doc", doc.id.toString())
-    let result = {} as SaveResult;
-    result.ceramicId = doc.id.toString();
-    result.doc = doc;
-    result.msg = "success";
-    console.log(result)
   }
   
   main();
