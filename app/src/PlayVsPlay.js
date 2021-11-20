@@ -4,51 +4,27 @@ import styled from "styled-components";
 import { Chessboard } from "react-chessboard";
 import { Fluence } from "@fluencelabs/fluence";
 import { krasnodar } from "@fluencelabs/fluence-network-environment";
-import { save_moves, read_moves, read_info, generate_doc } from "./_aqua/moves";
+import { save_moves, read_moves } from "./_aqua/moves";
 
-const relayNode =
-  "/dns4/kras-00.fluence.dev/tcp/19990/wss/p2p/12D3KooWSD5PToNiLQwKDXsu8JSysCwUt8BVUJEqCHcDe7P5h45e";
-const peerId = "12D3KooWFCY8xqebtZqNeiA5took71bUNAedzCCDuCuM1QTdTbWT";
-const relayPeerId = "12D3KooWSD5PToNiLQwKDXsu8JSysCwUt8BVUJEqCHcDe7P5h45e";
-const ceramicId = "https://gateway.ceramic.network";
+// TESTNET
+// const streamId =
+//   "kjzl6cwe1jw149pgumj6277cq1dondtbjco3syf945lgivi747tlrdotfki46ez";
 
-const currentGame =
-  "kjzl6cwe1jw149pgumj6277cq1dondtbjco3syf945lgivi747tlrdotfki46ez";
+// // MAINNET
+// const streamId =
+//   "kjzl6cwe1jw1486dfqnalcql6ar92q6tx9nycvw57pzxhl2nsoajbnzxeg1cmly";
 
-export default function PlayVsPlay() {
-  const chessboardRef = useRef();
-  const [game, setGame] = useState(new Chess());
+const PlayVsPlay = ({
+  game,
+  setGame,
+  chessboardRef,
+  relayNode,
+  relayPeerId,
+  peerId,
+  connectedFluence,
+  streamId,
+}) => {
   const [gameHistory, setGameHistory] = useState([]);
-  // const [ceramicId, setCeramicId] = useState("");
-  const [connectedFluence, setFluence] = useState();
-
-  // console.log("Game", game.history())
-
-  function safeGameMutate(modify) {
-    setGame((g) => {
-      const update = { ...g };
-      modify(update);
-      return update;
-    });
-  }
-
-  function moves() {
-    const history = game.history();
-    let moves = "";
-    let moveCounter = 0;
-    for (var i = 0; i < history.length; i++) {
-      if (i % 2) {
-        moves += " " + history[i];
-      } else {
-        moveCounter++;
-        moves += " " + moveCounter + ". " + history[i];
-      }
-    }
-    if (moves.length == 0) {
-      moves = "Play a move!";
-    }
-    return moves;
-  }
 
   async function sendToFluenceNode() {
     if (
@@ -58,30 +34,15 @@ export default function PlayVsPlay() {
     ) {
       return;
     }
-    console.log("Sending game", gameHistory, currentGame);
+    // console.log("Sending game", gameHistory, streamId);
     const myJson = JSON.stringify({ moves: gameHistory });
-    const saveRes = await save_moves(relayPeerId, peerId, myJson, currentGame);
-    const movesRes = await read_moves(relayPeerId, peerId, currentGame);
+    // const res = await generate_doc(relayPeerId, peerId, myJson);
+    // console.log(res);
+    console.log("try to save moves");
+    const saveRes = await save_moves(relayPeerId, peerId, myJson, streamId);
+    const movesRes = await read_moves(relayPeerId, peerId, streamId);
     console.log("Saved Moves", movesRes);
   }
-
-  const connectFluence = async () => {
-    await Fluence.start({ connectTo: relayNode }).catch((err) =>
-      console.log("Client initialization failed", err)
-    );
-    console.log("Fluence connected", Fluence.getStatus().isConnected);
-    console.log(Fluence);
-    return Fluence;
-  };
-
-  useEffect(() => {
-    (async () => {
-      if (!connectedFluence) {
-        const res = await connectFluence();
-        setFluence(res);
-      }
-    })();
-  });
 
   useEffect(() => {
     sendToFluenceNode();
@@ -116,24 +77,14 @@ export default function PlayVsPlay() {
         }}
         ref={chessboardRef}
       />
-      <button
-        className="rc-button"
-        onClick={() => {
-          // setCeramicId("");
-          safeGameMutate((game) => {
-            game.reset();
-          });
-          chessboardRef.current.clearPremoves();
-        }}
-      >
-        New Game
-      </button>
-      <p>Algebraic notation</p>
-      <MoveContainer>{moves()}</MoveContainer>
-      <button className="rc-button">View Dynamic NFT metadata</button>
+      <p style={{ marginTop: "10px", marginBottom: "5px" }}>
+        Ceramic Game Hash
+      </p>
+      {/* <MoveContainer>{moves()}</MoveContainer> */}
+      <MoveContainer>{streamId}</MoveContainer>
     </div>
   );
-}
+};
 
 const MoveContainer = styled.div`
   border-radius: 3px;
@@ -141,4 +92,7 @@ const MoveContainer = styled.div`
   padding: 10px;
   font-size: 0.9rem;
   max-width: 480px;
+  // padding-top: 5px;
 `;
+
+export default PlayVsPlay;

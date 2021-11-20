@@ -14,8 +14,10 @@ import {ethers} from "ethers"
 
 // write/read node for ceramic testnet
 (async () => {
-  
+  // TESTNET
 const API_URL = 'https://ceramic-clay.3boxlabs.com';
+// // MAINNET
+// const API_URL = 'https://gateway.ceramic.network';
 const ceramic = new CeramicClient(API_URL);
 const seed = new Uint8Array([
   134, 221,  59, 223, 109,  42,  34,  45,
