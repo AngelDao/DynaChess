@@ -173,7 +173,7 @@ function App() {
       />
       <header className="App-header">
         <div style={{ width: "500px" }}>
-          <p style={{ marginTop: "10px" }}>Fluence JS Dynamic Chess NFT</p>
+          <p style={{ marginTop: "10px" }}>DynaChess</p>
           <div
             style={{
               display: "flex",
